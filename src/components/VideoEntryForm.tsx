@@ -7,11 +7,22 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { VideoEntry, Playlist, PLAYLISTS, SCRIPT_ITEMS, SOUND_ITEMS, ScriptChecklist, SoundChecklist } from '@/types/video';
+import { RatingButton } from '@/components/ui/rating-button';
+import { 
+  VideoEntry, 
+  Playlist, 
+  PLAYLISTS, 
+  SCRIPT_RATING_ITEMS, 
+  SOUND_RATING_ITEMS, 
+  EXPERIENCE_INPUT_ITEMS,
+  ScriptRatings, 
+  SoundRatings,
+  ExperienceInputs
+} from '@/types/video';
 import { useToast } from '@/hooks/use-toast';
 
 interface VideoEntryFormProps {
-  onSubmit: (video: Omit<VideoEntry, 'id' | 'createdAt' | 'processWins'>) => void;
+  onSubmit: (video: Omit<VideoEntry, 'id' | 'createdAt' | 'craftScore' | 'experienceScore' | 'deltaScore'>) => void;
   onCancel?: () => void;
 }
 
@@ -19,36 +30,62 @@ export const VideoEntryForm: React.FC<VideoEntryFormProps> = ({ onSubmit, onCanc
   const { toast } = useToast();
   const [title, setTitle] = useState('');
   const [playlist, setPlaylist] = useState<Playlist | ''>('');
-  const [script, setScript] = useState<ScriptChecklist>({
-    hookClear: false,
-    storyStructure: false,
-    fluffCut: false,
-    concreteExample: false,
-    audienceBridge: false,
-  });
-  const [sound, setSound] = useState<SoundChecklist>({
-    musicAligned: false,
-    intentionalSilence: false,
-    mixBalanced: false,
-    moodFitRating: 1,
+  const [script, setScript] = useState<ScriptRatings>({
+    hookEffectiveness: 3,
+    structureClarity: 3,
+    concision: 3,
+    specificity: 3,
+    audienceBridge: 3,
     newExperiment: false,
     experimentNotes: '',
   });
+  const [sound, setSound] = useState<SoundRatings>({
+    cueAlignment: 3,
+    silencePlacement: 3,
+    mixBalance: 3,
+    emotionalFit: 3,
+    newExperiment: false,
+    experimentNotes: '',
+  });
+  const [experienceInputs, setExperienceInputs] = useState<ExperienceInputs>({
+    retention30s: 0,
+    avgWatchTime: 0,
+    craftMentions: 0,
+  });
 
-  const handleScriptChange = (key: keyof ScriptChecklist, value: boolean) => {
+  const handleScriptChange = (key: keyof ScriptRatings, value: number | boolean | string) => {
     setScript(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSoundChange = (key: keyof SoundChecklist, value: boolean | number | string) => {
+  const handleSoundChange = (key: keyof SoundRatings, value: number | boolean | string) => {
     setSound(prev => ({ ...prev, [key]: value }));
   };
 
-  const calculateProcessWins = () => {
-    const scriptWins = Object.values(script).filter(Boolean).length;
-    const soundWins = Object.entries(sound).filter(([key, value]) => 
-      key !== 'moodFitRating' && key !== 'experimentNotes' && Boolean(value)
-    ).length + (sound.moodFitRating >= 4 ? 1 : 0);
-    return scriptWins + soundWins;
+  const handleExperienceChange = (key: keyof ExperienceInputs, value: number) => {
+    setExperienceInputs(prev => ({ ...prev, [key]: value }));
+  };
+
+  const calculateCraftScore = (): number => {
+    const scriptRatings = Object.values(script);
+    const soundRatings = [sound.cueAlignment, sound.silencePlacement, sound.mixBalance, sound.emotionalFit];
+    const allRatings = [...scriptRatings, ...soundRatings];
+    const average = allRatings.reduce((sum, rating) => sum + rating, 0) / allRatings.length;
+    return Math.round((average / 5) * 100);
+  };
+
+  const calculateExperienceScore = (): number => {
+    // Weight retention higher than watch time
+    const retentionWeight = 0.6;
+    const watchTimeWeight = 0.3;
+    const mentionsWeight = 0.1;
+    
+    const score = (
+      (experienceInputs.retention30s * retentionWeight) +
+      (experienceInputs.avgWatchTime * watchTimeWeight) +
+      (Math.min(experienceInputs.craftMentions * 10, 100) * mentionsWeight)
+    );
+    
+    return Math.round(score);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -68,17 +105,23 @@ export const VideoEntryForm: React.FC<VideoEntryFormProps> = ({ onSubmit, onCanc
       playlist: playlist as Playlist,
       script,
       sound,
-      experienceSignals: {},
+      experienceInputs,
       distributionMetrics: {},
     });
 
+    const craftScore = calculateCraftScore();
+    const experienceScore = calculateExperienceScore();
+    const deltaScore = experienceScore - craftScore;
+
     toast({
       title: "Video entry created!",
-      description: `Logged ${calculateProcessWins()} process wins.`,
+      description: `Craft Score: ${craftScore}, Experience Score: ${experienceScore}, Delta: ${deltaScore >= 0 ? '+' : ''}${deltaScore}`,
     });
   };
 
-  const processWins = calculateProcessWins();
+  const craftScore = calculateCraftScore();
+  const experienceScore = calculateExperienceScore();
+  const deltaScore = experienceScore - craftScore;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto">
@@ -116,55 +159,67 @@ export const VideoEntryForm: React.FC<VideoEntryFormProps> = ({ onSubmit, onCanc
 
       <Card className="border-success/20">
         <CardHeader>
-          <CardTitle className="text-success">Script Checklist</CardTitle>
+          <CardTitle className="text-success">Script Ratings</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {SCRIPT_ITEMS.map((item) => (
-            <div key={item.key} className="flex items-center space-x-2">
-              <Checkbox
-                id={item.key}
-                checked={script[item.key]}
-                onCheckedChange={(checked) => handleScriptChange(item.key, !!checked)}
-              />
-              <Label htmlFor={item.key} className="text-sm">{item.label}</Label>
-            </div>
+        <CardContent className="space-y-4">
+          {SCRIPT_RATING_ITEMS.map((item) => (
+            <RatingButton
+              key={item.key}
+              value={script[item.key] as number}
+              onChange={(value) => handleScriptChange(item.key, value)}
+              label={item.label}
+            />
           ))}
+          
+          <Separator />
+          
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="scriptNewExperiment"
+              checked={script.newExperiment}
+              onCheckedChange={(checked) => handleScriptChange('newExperiment', !!checked)}
+            />
+            <Label htmlFor="scriptNewExperiment" className="text-sm">New experiment tried?</Label>
+          </div>
+
+          {script.newExperiment && (
+            <div className="space-y-2">
+              <Label htmlFor="scriptExperimentNotes">Experiment Notes</Label>
+              <Textarea
+                id="scriptExperimentNotes"
+                value={script.experimentNotes || ''}
+                onChange={(e) => handleScriptChange('experimentNotes', e.target.value)}
+                placeholder="What experiment did you try?"
+                rows={3}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
       <Card className="border-success/20">
         <CardHeader>
-          <CardTitle className="text-success">Sound Checklist</CardTitle>
+          <CardTitle className="text-success">Sound Ratings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {SOUND_ITEMS.map((item) => (
-            <div key={item.key} className="flex items-center space-x-2">
-              <Checkbox
-                id={item.key}
-                checked={sound[item.key] as boolean}
-                onCheckedChange={(checked) => handleSoundChange(item.key, !!checked)}
-              />
-              <Label htmlFor={item.key} className="text-sm">{item.label}</Label>
-            </div>
+          {SOUND_RATING_ITEMS.map((item) => (
+            <RatingButton
+              key={item.key}
+              value={sound[item.key] as number}
+              onChange={(value) => handleSoundChange(item.key, value)}
+              label={item.label}
+            />
           ))}
           
           <Separator />
           
-          <div className="space-y-2">
-            <Label htmlFor="moodRating">Mood fit rating (1-5)</Label>
-            <Select 
-              value={sound.moodFitRating.toString()} 
-              onValueChange={(value) => handleSoundChange('moodFitRating', parseInt(value))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {[1, 2, 3, 4, 5].map((rating) => (
-                  <SelectItem key={rating} value={rating.toString()}>{rating}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="newExperiment"
+              checked={sound.newExperiment}
+              onCheckedChange={(checked) => handleSoundChange('newExperiment', !!checked)}
+            />
+            <Label htmlFor="newExperiment" className="text-sm">New experiment tried?</Label>
           </div>
 
           {sound.newExperiment && (
@@ -182,13 +237,36 @@ export const VideoEntryForm: React.FC<VideoEntryFormProps> = ({ onSubmit, onCanc
         </CardContent>
       </Card>
 
+      <Card className="border-warning/20">
+        <CardHeader>
+          <CardTitle className="text-warning">Experience Inputs</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {EXPERIENCE_INPUT_ITEMS.map((item) => (
+            <div key={item.key} className="space-y-2">
+              <Label htmlFor={item.key}>{item.label}</Label>
+              <Input
+                id={item.key}
+                type="number"
+                min={item.key === 'craftMentions' ? 0 : 0}
+                max={item.key === 'craftMentions' ? 999 : 100}
+                value={experienceInputs[item.key]}
+                onChange={(e) => handleExperienceChange(item.key, parseInt(e.target.value) || 0)}
+                placeholder={item.placeholder}
+                className="w-full"
+              />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
       <Card className="bg-success-light border-success/20">
         <CardContent className="pt-6">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-success mb-1">
-              {processWins}
+          <div className="text-center space-y-2">
+            <div className="text-2xl font-bold text-success">
+              {craftScore}
             </div>
-            <div className="text-sm text-success/80">Process Wins</div>
+            <div className="text-sm text-success/80">Craft Score</div>
           </div>
         </CardContent>
       </Card>

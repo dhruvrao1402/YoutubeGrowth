@@ -29,7 +29,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ videos, onNewVideo, onVide
     );
     
     for (const video of sortedVideos) {
-      if (video.processWins >= 3) {
+      if (video.craftScore >= 60) {
         streak++;
       } else {
         break;
@@ -38,8 +38,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ videos, onNewVideo, onVide
     return streak;
   };
 
-  const totalProcessWins = videos.reduce((sum, video) => sum + video.processWins, 0);
-  const avgProcessWins = videos.length > 0 ? (totalProcessWins / videos.length).toFixed(1) : '0';
+  const calculateLast5Averages = () => {
+    const sortedVideos = [...videos].sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    
+    const last5Videos = sortedVideos.slice(0, 5);
+    
+    if (last5Videos.length === 0) return { craftScore: 0, experienceScore: 0, delta: 0 };
+    
+    const avgCraftScore = last5Videos.reduce((sum, video) => sum + video.craftScore, 0) / last5Videos.length;
+    const avgExperienceScore = last5Videos.reduce((sum, video) => sum + video.experienceScore, 0) / last5Videos.length;
+    const avgDelta = last5Videos.reduce((sum, video) => sum + video.deltaScore, 0) / last5Videos.length;
+    
+    return {
+      craftScore: Math.round(avgCraftScore),
+      experienceScore: Math.round(avgExperienceScore),
+      delta: Math.round(avgDelta)
+    };
+  };
+
+  const averages = calculateLast5Averages();
 
   return (
     <div className="space-y-6">
@@ -56,7 +75,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ videos, onNewVideo, onVide
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="bg-success-light p-4 rounded-lg border border-success/20">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-success" />
@@ -65,7 +84,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ videos, onNewVideo, onVide
           <div className="text-2xl font-bold text-success mt-1">
             {currentStreak()}
           </div>
-          <div className="text-xs text-success/70">Videos with 3+ wins</div>
+          <div className="text-xs text-success/70">Videos with Craft Score ≥60</div>
         </div>
         
         <div className="bg-card p-4 rounded-lg border">
@@ -73,9 +92,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ videos, onNewVideo, onVide
           <div className="text-2xl font-bold mt-1">{videos.length}</div>
         </div>
         
-        <div className="bg-card p-4 rounded-lg border">
-          <div className="text-sm font-medium text-muted-foreground">Avg Process Wins</div>
-          <div className="text-2xl font-bold mt-1">{avgProcessWins}</div>
+        <div className="bg-success-light p-4 rounded-lg border border-success/20">
+          <div className="text-sm font-medium text-success">Avg Craft Score</div>
+          <div className="text-2xl font-bold text-success mt-1">{averages.craftScore}</div>
+          <div className="text-xs text-success/70">Last 5 videos</div>
+        </div>
+
+        <div className="bg-warning-light p-4 rounded-lg border border-warning/20">
+          <div className="text-sm font-medium text-warning">Avg Experience Score</div>
+          <div className="text-2xl font-bold text-warning mt-1">{averages.experienceScore}</div>
+          <div className="text-xs text-warning/70">Last 5 videos</div>
+        </div>
+      </div>
+
+      {/* Delta Score */}
+      <div className="bg-card p-4 rounded-lg border">
+        <div className="text-center">
+          <div className="text-sm font-medium text-muted-foreground mb-2">Average Delta Score (Last 5 Videos)</div>
+          <div className={`text-3xl font-bold ${averages.delta >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {averages.delta >= 0 ? '+' : ''}{averages.delta}
+          </div>
+          <div className={`text-sm ${averages.delta >= 0 ? 'text-green-600' : 'text-red-600'} opacity-80`}>
+            {averages.delta >= 0 ? 'Experience > Craft' : 'Craft > Experience'}
+          </div>
         </div>
       </div>
 

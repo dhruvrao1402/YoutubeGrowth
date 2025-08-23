@@ -2,50 +2,57 @@ import React from 'react';
 import { StatsHeader } from '@/components/StatsHeader';
 import { CompactVideoEntryForm } from '@/components/CompactVideoEntryForm';
 import { TrendsPanel } from '@/components/TrendsPanel';
-import { VideoEntry } from '@/types/video';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useVideos } from '@/hooks/useVideos';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { VideoEntry } from '@/services/api';
 
-const Index = () => {
-  const [videos, setVideos] = useLocalStorage<VideoEntry[]>('youtube-craft-videos', []);
+export default function Index() {
+  const { videos, createVideo, deleteVideo, updateVideo } = useVideos();
+  const { analytics, refreshAnalytics } = useAnalytics();
 
-  const calculateProcessWins = (video: Omit<VideoEntry, 'id' | 'createdAt' | 'processWins'>) => {
-    const scriptWins = Object.values(video.script).filter(Boolean).length;
-    const soundWins = Object.entries(video.sound).filter(([key, value]) => 
-      key !== 'moodFitRating' && key !== 'experimentNotes' && Boolean(value)
-    ).length + (video.sound.moodFitRating >= 4 ? 1 : 0);
-    return scriptWins + soundWins;
+  const handleNewVideo = async (videoData: Omit<VideoEntry, 'id' | 'createdAt' | 'craftScore' | 'experienceScore' | 'deltaScore'>) => {
+    try {
+      await createVideo(videoData);
+      // Refresh analytics after creating a new video
+      refreshAnalytics();
+    } catch (error) {
+      console.error('Failed to create video:', error);
+    }
   };
 
-  const handleNewVideo = (videoData: Omit<VideoEntry, 'id' | 'createdAt' | 'processWins'>) => {
-    const newVideo: VideoEntry = {
-      ...videoData,
-      id: crypto.randomUUID(),
-      createdAt: new Date(),
-      processWins: calculateProcessWins(videoData),
-    };
+  const handleDeleteVideo = async (id: string) => {
+    try {
+      await deleteVideo(id);
+      // Refresh analytics after deleting a video
+      refreshAnalytics();
+    } catch (error) {
+      console.error('Failed to delete video:', error);
+    }
+  };
 
-    setVideos(prev => [newVideo, ...prev]);
+  const handleUpdateVideo = async (id: string, videoData: Partial<VideoEntry>) => {
+    try {
+      await updateVideo(id, videoData);
+      // Refresh analytics after updating a video
+      refreshAnalytics();
+    } catch (error) {
+      console.error('Failed to update video:', error);
+    }
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <StatsHeader videos={videos} />
+      <StatsHeader videos={videos} analytics={analytics} />
       
-      <div className="container mx-auto px-6 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* Left Side - Video Entry Form */}
-          <div className="xl:col-span-2">
-            <CompactVideoEntryForm onSubmit={handleNewVideo} />
-          </div>
-          
-          {/* Right Side - Trends & Archive */}
-          <div className="xl:col-span-1">
-            <TrendsPanel videos={videos} />
-          </div>
-        </div>
-      </div>
+      <main className="container mx-auto px-4 py-8 space-y-8">
+        <CompactVideoEntryForm onSubmit={handleNewVideo} />
+        
+        <TrendsPanel 
+          videos={videos}
+          onDeleteVideo={handleDeleteVideo}
+          onUpdateVideo={handleUpdateVideo}
+        />
+      </main>
     </div>
   );
-};
-
-export default Index;
+}

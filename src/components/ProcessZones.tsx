@@ -6,9 +6,9 @@ import { VideoEntry } from '@/types/video';
 
 interface ProcessZonesProps {
   currentVideo?: Partial<VideoEntry>;
-  onUpdateExperience?: (field: string, value: string) => void;
+  onUpdateExperience?: (field: string, value: number) => void;
   onUpdateDistribution?: (field: string, value: string | number) => void;
-  processWins: number;
+  processWins: number; // This is now the Craft Score
 }
 
 export const ProcessZones: React.FC<ProcessZonesProps> = ({ 
@@ -19,18 +19,18 @@ export const ProcessZones: React.FC<ProcessZonesProps> = ({
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {/* Process (Green Zone) */}
+      {/* Process (Green Zone) - Now Craft Score */}
       <Card className="border-success/20 bg-success-light">
         <CardContent className="p-4">
           <div className="text-center">
-            <div className="text-sm font-medium text-success mb-1">PROCESS (GREEN ZONE)</div>
+            <div className="text-sm font-medium text-success mb-1">CRAFT SCORE (GREEN ZONE)</div>
             <div className="space-y-2">
               <div>
                 <div className="text-xs text-success/70">Script</div>
                 <div className="text-lg font-bold text-success">
                   {currentVideo?.script ? 
-                    Object.values(currentVideo.script).filter(Boolean).length : 
-                    Math.floor(processWins * 0.6)
+                    Math.round((Object.values(currentVideo.script).filter(val => typeof val === 'number').reduce((sum, rating) => sum + (rating as number), 0) / Object.values(currentVideo.script).filter(val => typeof val === 'number').length) / 5 * 100) : 
+                    0
                   }
                 </div>
               </div>
@@ -38,15 +38,13 @@ export const ProcessZones: React.FC<ProcessZonesProps> = ({
                 <div className="text-xs text-success/70">Sound</div>
                 <div className="text-lg font-bold text-success">
                   {currentVideo?.sound ? 
-                    Object.entries(currentVideo.sound).filter(([key, value]) => 
-                      key !== 'moodFitRating' && key !== 'experimentNotes' && Boolean(value)
-                    ).length + (currentVideo.sound.moodFitRating >= 4 ? 1 : 0) :
-                    Math.ceil(processWins * 0.4)
+                    Math.round(([currentVideo.sound.cueAlignment, currentVideo.sound.silencePlacement, currentVideo.sound.mixBalance, currentVideo.sound.emotionalFit].filter(rating => typeof rating === 'number').reduce((sum, rating) => sum + (rating as number), 0) / 4) / 5 * 100) :
+                    0
                   }
                 </div>
               </div>
               <div className="pt-2 border-t border-success/20">
-                <div className="text-xs text-success/70">Total Wins</div>
+                <div className="text-xs text-success/70">Craft Score</div>
                 <div className="text-xl font-bold text-success">{processWins}</div>
               </div>
             </div>
@@ -63,33 +61,38 @@ export const ProcessZones: React.FC<ProcessZonesProps> = ({
               <Label htmlFor="retention" className="text-xs text-warning/70">Retention at 30s (%)</Label>
               <Input
                 id="retention"
-                type="text"
-                placeholder="—"
+                type="number"
+                min="0"
+                max="100"
+                placeholder="0-100"
                 className="h-8 text-center bg-warning/10 border-warning/20"
-                value={currentVideo?.experienceSignals?.retentionSnapshot || ''}
-                onChange={(e) => onUpdateExperience?.('retentionSnapshot', e.target.value)}
+                value={currentVideo?.experienceInputs?.retention30s || ''}
+                onChange={(e) => onUpdateExperience?.('retention30s', parseInt(e.target.value) || 0)}
               />
             </div>
             <div>
-              <Label htmlFor="watchtime" className="text-xs text-warning/70">Avg Watch Time (sec)</Label>
+              <Label htmlFor="watchtime" className="text-xs text-warning/70">Avg Watch Time (%)</Label>
               <Input
                 id="watchtime"
-                type="text"
-                placeholder="—"
+                type="number"
+                min="0"
+                max="100"
+                placeholder="0-100"
                 className="h-8 text-center bg-warning/10 border-warning/20"
-                value={currentVideo?.experienceSignals?.avgWatchTime || ''}
-                onChange={(e) => onUpdateExperience?.('avgWatchTime', e.target.value)}
+                value={currentVideo?.experienceInputs?.avgWatchTime || ''}
+                onChange={(e) => onUpdateExperience?.('avgWatchTime', parseInt(e.target.value) || 0)}
               />
             </div>
             <div>
-              <Label htmlFor="mentions" className="text-xs text-warning/70">Mentions of Craft (#)</Label>
+              <Label htmlFor="mentions" className="text-xs text-warning/70">Craft Mentions (#)</Label>
               <Input
                 id="mentions"
-                type="text"
-                placeholder="—"
+                type="number"
+                min="0"
+                placeholder="0"
                 className="h-8 text-center bg-warning/10 border-warning/20"
-                value={currentVideo?.experienceSignals?.commentsMentions || ''}
-                onChange={(e) => onUpdateExperience?.('commentsMentions', e.target.value)}
+                value={currentVideo?.experienceInputs?.craftMentions || ''}
+                onChange={(e) => onUpdateExperience?.('craftMentions', parseInt(e.target.value) || 0)}
               />
             </div>
           </div>

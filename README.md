@@ -1,73 +1,149 @@
-# Welcome to your Lovable project
+# YouTube Craft Tracker
 
-## Project info
+A full-stack application to track and analyze YouTube video quality improvements using a ratings-based system.
 
-**URL**: https://lovable.dev/projects/2f954f10-a247-42f3-a99b-57406992784b
+## Features
 
-## How can I edit this code?
+- **Script Ratings**: Rate hook effectiveness, structure clarity, concision, specificity, and audience bridge (1-5 scale)
+- **Sound Ratings**: Rate cue alignment, silence placement, mix balance, and emotional fit (1-5 scale)
+- **Experiment Tracking**: Document new techniques tried in both script and sound
+- **Experience Metrics**: Track retention at 30s, average watch time, and craft mentions in comments
+- **Automatic Scoring**: Calculates Craft Score, Experience Score, and Delta Score
+- **Analytics Dashboard**: View trends, averages, and weekly streaks
+- **Full CRUD Operations**: Create, read, update, and delete video entries
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+### Frontend
+- React 18 + TypeScript
+- Tailwind CSS
+- Shadcn/ui components
+- Vite build tool
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/2f954f10-a247-42f3-a99b-57406992784b) and start prompting.
+### Backend
+- Node.js + Express
+- MongoDB + Mongoose
+- RESTful API
+- CORS enabled
 
-Changes made via Lovable will be committed automatically to this repo.
+## Getting Started
 
-**Use your preferred IDE**
+### Prerequisites
+- Node.js 18+
+- MongoDB (local or cloud)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Backend Setup
+1. Navigate to the backend directory:
+```bash
+cd backend
+```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+2. Install dependencies:
+```bash
+npm install
+```
 
-Follow these steps:
+3. Create a `.env` file:
+```
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/youtube-craft-tracker
+NODE_ENV=development
+```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+4. Start the backend server:
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The backend will run on `http://localhost:5000`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Frontend Setup
+1. In a new terminal, navigate to the root directory:
+```bash
+cd ..
+```
 
-**Use GitHub Codespaces**
+2. Install dependencies:
+```bash
+npm install
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+3. Start the development server:
+```bash
+npm run dev
+```
 
-## What technologies are used for this project?
+The frontend will run on `http://localhost:8080` (or next available port)
 
-This project is built with:
+## API Endpoints
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Videos
+- `GET /api/videos` - Get all videos
+- `GET /api/videos/:id` - Get video by ID
+- `POST /api/videos` - Create new video
+- `PUT /api/videos/:id` - Update video
+- `DELETE /api/videos/:id` - Delete video
 
-## How can I deploy this project?
+### Analytics
+- `GET /api/videos/stats/analytics` - Get analytics and statistics
 
-Simply open [Lovable](https://lovable.dev/projects/2f954f10-a247-42f3-a99b-57406992784b) and click on Share -> Publish.
+## Data Model
 
-## Can I connect a custom domain to my Lovable project?
+Each video entry includes:
+- **Script Ratings**: 5 criteria rated 1-5
+- **Sound Ratings**: 4 criteria rated 1-5
+- **Experiment Notes**: Optional notes for new techniques
+- **Experience Inputs**: Audience metrics (retention, watch time, mentions)
+- **Distribution Metrics**: Views and CTR (optional)
+- **Calculated Scores**: Craft Score (0-100), Experience Score (0-100), Delta Score
 
-Yes, you can!
+## Scoring System
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- **Craft Score**: Average of all script + sound ratings, converted to 0-100 scale
+- **Experience Score**: Weighted average of retention (60%), watch time (30%), and mentions (10%)
+- **Delta Score**: Experience Score - Craft Score (positive = audience engagement exceeds craft quality)
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## Development
+
+### Backend Development
+```bash
+cd backend
+npm run dev  # Start with nodemon for auto-restart
+```
+
+### Frontend Development
+```bash
+npm run dev  # Start Vite dev server
+npm run build  # Build for production
+```
+
+### Database
+The application uses MongoDB. Make sure MongoDB is running locally or update the connection string in the backend `.env` file.
+
+## Project Structure
+
+```
+├── src/                    # Frontend source
+│   ├── components/        # React components
+│   ├── hooks/            # Custom React hooks
+│   ├── services/         # API service layer
+│   ├── types/            # TypeScript type definitions
+│   └── pages/            # Page components
+├── backend/               # Backend source
+│   ├── models/           # Mongoose models
+│   ├── routes/           # Express routes
+│   └── server.js         # Main server file
+└── README.md             # This file
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+
+ISC License
