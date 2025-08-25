@@ -26,6 +26,21 @@ app.get('/test', (req, res) => {
   res.json({ message: 'Test endpoint working!', timestamp: new Date().toISOString() });
 });
 
+// Test video creation endpoint (no auth required for debugging)
+app.post('/test-video', async (req, res) => {
+  try {
+    console.log('Test video request body:', req.body);
+    res.json({ 
+      message: 'Test video endpoint working!', 
+      receivedData: req.body,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Test video error:', error);
+    res.status(500).json({ message: 'Test failed', error: error.message });
+  }
+});
+
 // Health check
 app.get('/health', async (req, res) => {
   try {

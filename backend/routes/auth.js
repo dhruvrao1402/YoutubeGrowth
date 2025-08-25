@@ -65,15 +65,22 @@ router.post('/login', async (req, res) => {
 const verifyToken = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
 
+  console.log('🔍 Token verification attempt:');
+  console.log('🔑 Authorization header:', req.headers.authorization);
+  console.log('🔑 Extracted token:', token ? 'Present' : 'Missing');
+
   if (!token) {
+    console.log('❌ No token provided');
     return res.status(401).json({ message: 'Access token required' });
   }
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
+    console.log('✅ Token verified successfully:', decoded);
     req.user = decoded;
     next();
   } catch (error) {
+    console.log('❌ Token verification failed:', error.message);
     return res.status(401).json({ message: 'Invalid token' });
   }
 };

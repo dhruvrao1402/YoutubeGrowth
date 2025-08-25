@@ -47,6 +47,10 @@ router.get('/:id', async (req, res) => {
 // Create new video
 router.post('/', async (req, res) => {
   try {
+    console.log('🔍 Video creation request received:');
+    console.log('🔑 User from token:', req.user);
+    console.log('📝 Request body:', req.body);
+    
     const videoData = {
       title: req.body.title,
       playlist: req.body.playlist,
@@ -57,6 +61,8 @@ router.post('/', async (req, res) => {
       created_at: new Date().toISOString(),
       user_id: req.user.username // Add user ID from JWT token
     };
+
+    console.log('🔍 Processed video data:', videoData);
 
     // Calculate scores
     const scriptRatings = [

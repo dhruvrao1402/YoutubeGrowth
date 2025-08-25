@@ -47,18 +47,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const verifyToken = async (tokenToVerify: string) => {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      console.log('🔍 Verifying token with URL:', `${apiUrl}/api/auth/me`);
+      console.log('🔑 Token being verified:', tokenToVerify ? 'Present' : 'Missing');
+      
       const response = await fetch(`${apiUrl}/api/auth/me`, {
         headers: {
           'Authorization': `Bearer ${tokenToVerify}`
         }
       });
 
+      console.log('🔍 Token verification response status:', response.status);
+
       if (response.ok) {
         const userData = await response.json();
+        console.log('✅ Token verification successful:', userData);
         setUser(userData);
         setToken(tokenToVerify);
       } else {
         // Token is invalid, remove it
+        console.log('❌ Token verification failed, removing token');
         localStorage.removeItem('authToken');
         setToken(null);
         setUser(null);

@@ -62,6 +62,13 @@ export class ApiService {
   private async request(endpoint: string, options: RequestInit = {}): Promise<any> {
     const token = localStorage.getItem('authToken');
     
+    console.log('🔍 API Request:', {
+      url: `${this.baseUrl}${endpoint}`,
+      method: options.method || 'GET',
+      hasToken: !!token,
+      tokenPreview: token ? `${token.substring(0, 20)}...` : 'None'
+    });
+    
     const config: RequestInit = {
       ...options,
       headers: {
@@ -71,15 +78,26 @@ export class ApiService {
       },
     };
 
+    console.log('🔍 Request config:', {
+      headers: config.headers,
+      body: options.body ? JSON.parse(options.body as string) : undefined
+    });
+
     const response = await fetch(`${this.baseUrl}${endpoint}`, config);
+
+    console.log('🔍 Response status:', response.status);
+    console.log('🔍 Response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
       if (response.status === 401) {
         // Token expired or invalid, redirect to login
+        console.log('❌ 401 Unauthorized - removing token');
         localStorage.removeItem('authToken');
         window.location.reload();
         throw new Error('Authentication required');
       }
+      const errorText = await response.text();
+      console.log('❌ API Error response:', errorText);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
