@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+import { getApiUrl } from '../config/environment';
+
+const API_BASE_URL = getApiUrl();
 
 export interface VideoEntry {
   id?: string;
@@ -86,36 +88,36 @@ export class ApiService {
 
   // Video CRUD operations
   async getAllVideos(): Promise<VideoEntry[]> {
-    return this.request<VideoEntry[]>('/videos');
+    return this.request('/videos');
   }
 
   async getVideoById(id: string): Promise<VideoEntry> {
-    return this.request<VideoEntry>(`/videos/${id}`);
+    return this.request(`/videos/${id}`);
   }
 
   async createVideo(video: Omit<VideoEntry, 'id' | 'createdAt' | 'craftScore' | 'experienceScore' | 'deltaScore'>): Promise<VideoEntry> {
-    return this.request<VideoEntry>('/videos', {
+    return this.request('/videos', {
       method: 'POST',
       body: JSON.stringify(video),
     });
   }
 
   async updateVideo(id: string, video: Partial<VideoEntry>): Promise<VideoEntry> {
-    return this.request<VideoEntry>(`/videos/${id}`, {
+    return this.request(`/videos/${id}`, {
       method: 'PUT',
       body: JSON.stringify(video),
     });
   }
 
   async deleteVideo(id: string): Promise<{ message: string }> {
-    return this.request<{ message: string }>(`/videos/${id}`, {
+    return this.request('/videos/${id}', {
       method: 'DELETE',
     });
   }
 
   // Analytics
   async getAnalytics(): Promise<AnalyticsData> {
-    return this.request<AnalyticsData>('/videos/stats/analytics');
+    return this.request('/videos/stats/analytics');
   }
 }
 
