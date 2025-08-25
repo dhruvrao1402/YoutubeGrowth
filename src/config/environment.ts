@@ -4,7 +4,7 @@ export const config = {
     apiUrl: 'http://localhost:5000/api'
   },
   production: {
-    apiUrl: 'https://REPLACE_WITH_YOUR_BACKEND_URL.vercel.app/api' // ⚠️ REPLACE: your-backend-name → your actual backend name
+    apiUrl: 'https://youtube-growth-8avy-ppn8yu9u1-dhruva-raos-projects.vercel.app/api' // ⚠️ REPLACE: your-backend-name → your actual backend name
   }
 };
 
